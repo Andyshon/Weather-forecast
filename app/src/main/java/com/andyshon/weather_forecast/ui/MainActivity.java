@@ -1,16 +1,10 @@
 package com.andyshon.weather_forecast.ui;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
-import android.location.Location;
-import android.os.Handler;
-import android.os.ResultReceiver;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,24 +17,20 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.andyshon.weather_forecast.GetAddressIntentService;
 import com.andyshon.weather_forecast.GlobalConstants;
+import com.andyshon.weather_forecast.LocationDetector;
 import com.andyshon.weather_forecast.R;
 import com.andyshon.weather_forecast.db.IService;
 import com.andyshon.weather_forecast.db.RestClient;
 import com.andyshon.weather_forecast.db.entity.WeatherDay;
 import com.andyshon.weather_forecast.db.entity.WeatherForecast;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -50,112 +40,28 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationDetector.MyCallback {
 
     private String TAG = "WEATHER";
     private TextView tvTemp, tvHumidity, tvDate, tvWind;
     private ImageView tvImage;
     private IService api;
     private Toolbar toolbar;
+    private Button button;
 
+    private WeatherViewModel weatherViewModel;
+    private LiveData<WeatherDay> weatherDayLiveData;
+
+    private LiveData<WeatherForecast> weatherForecastLiveData;
 
     /*
     * Any fool can write code that a computer can understand. Good programmers write code that humans can understand..
     * */
 
-    private FusedLocationProviderClient fusedLocationClient;
-
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
-
-    private LocationAddressResultReceiver addressResultReceiver;
-
-    private Location currentLocation;
-
-    private LocationCallback locationCallback;
-
     private ListView listView;
     private List<WeatherDay> weatherDays;
-
-
-
-    @SuppressWarnings("MissingPermission")
-    private void startLocationUpdates() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            LocationRequest locationRequest = new LocationRequest();
-            //locationRequest.setInterval(5000);
-            //locationRequest.setFastestInterval(10000);
-            //locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        }
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void getAddress() {
-
-        if (!Geocoder.isPresent()) {
-            Toast.makeText(MainActivity.this, "Can't find current address, ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent intent = new Intent(this, GetAddressIntentService.class);
-        intent.putExtra("add_receiver", addressResultReceiver);
-        intent.putExtra("add_location", currentLocation);
-        startService(intent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case LOCATION_PERMISSION_REQUEST_CODE: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startLocationUpdates();
-                } else {
-                    Toast.makeText(this, "Location permission not granted, " + "restart the app if you want the feature", Toast.LENGTH_SHORT).show();
-                }
-                return;
-            }
-
-        }
-    }
-
-    private class LocationAddressResultReceiver extends ResultReceiver {
-        LocationAddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(int resultCode, Bundle resultData) {
-
-            if (resultCode == 0) {
-                //Last Location can be null for various reasons
-                //for example the api is called first time
-                //so retry till location is set
-                //since intent service runs on background thread, it doesn't block main thread
-                Log.d("Address", "Location null retrying");
-                getAddress();
-            }
-
-            if (resultCode == 1) {
-                Toast.makeText(MainActivity.this, "Address not found, " , Toast.LENGTH_SHORT).show();
-            }
-
-            String currentAdd = resultData.getString("address_result");
-
-            showResults(currentAdd);
-        }
-    }
-
-    private void showResults(String currentAdd){
-        Toast.makeText(this, "currentAdd:" + currentAdd, Toast.LENGTH_SHORT).show();
-        fusedLocationClient.removeLocationUpdates(locationCallback);
-        getWeather(null);
-    }
-
-
-
+    private List<WeatherDay> weatherForecastList;
+    private List<WeatherDay> allDays;
 
 
     @Override
@@ -163,6 +69,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "refresh today weather", Toast.LENGTH_SHORT).show();
+                weatherDayLiveData = weatherViewModel.getTodayData();
+                weatherForecastLiveData = weatherViewModel.getForecastData();
+            }
+        });
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -174,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(false);
 
         weatherDays = new ArrayList<>();
+        weatherForecastList = new ArrayList<>();
+        allDays = new ArrayList<>();
 
         tvTemp = (TextView) findViewById(R.id.tvTemp);
         tvHumidity = (TextView) findViewById(R.id.tvHumidity);
@@ -184,20 +102,114 @@ public class MainActivity extends AppCompatActivity {
         api = RestClient.initService();
 
 
-        addressResultReceiver = new LocationAddressResultReceiver(new Handler());
+        if (!GlobalConstants.IsLocationDetected) {
+            System.out.println("Location is not detected yet");
+            new LocationDetector(this, this);
+        }
+        else {
+            System.out.println("Location already detected");
+        }
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        locationCallback = new LocationCallback() {
+        weatherViewModel = ViewModelProviders.of(this).get(WeatherViewModel.class);
+        //GlobalConstants.setCurrentCity("Запорожье");
+        weatherDayLiveData = weatherViewModel.getTodayData();
+        weatherDayLiveData.observe(this, new Observer<WeatherDay>() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-                currentLocation = locationResult.getLocations().get(0);
-                getAddress();
-            };
-        };
-        startLocationUpdates();
+            public void onChanged(@Nullable WeatherDay weatherDay) {
+                System.out.println("GET WEATHERDAY :" + weatherDay);
+                setTodayUI(weatherDay);
+            }
+        });
+
+        weatherForecastLiveData = weatherViewModel.getForecastData();
+        weatherForecastLiveData.observe(this, new Observer<WeatherForecast>() {
+            @Override
+            public void onChanged(@Nullable WeatherForecast weatherForecast) {
+                System.out.println("GET WEATHERFORECAST:" + weatherForecast);
+
+                weatherDays.clear();
+                weatherForecastList.clear();
+                allDays.clear();
+
+
+                Log.d(TAG, "size="+weatherForecast.getItems().size());
+
+                for (WeatherDay day : weatherForecast.getItems()) {
+
+                    allDays.add(day);
+
+                    Log.d(TAG, "dt_Txt:" + day.getDt_txt());
+                    Log.d(TAG, "temp:" + day.getTemp());
+                    Log.d(TAG, "dt:" + day.getDate().get(Calendar.HOUR_OF_DAY));
+
+                    if (day.getDate().get(Calendar.HOUR_OF_DAY) == 15) {
+                        String date = String.format("%d.%d.%d %d:%d",
+                                day.getDate().get(Calendar.DAY_OF_MONTH),
+                                day.getDate().get(Calendar.WEEK_OF_MONTH),
+                                day.getDate().get(Calendar.YEAR),
+                                day.getDate().get(Calendar.HOUR_OF_DAY),
+                                day.getDate().get(Calendar.MINUTE)
+                        );
+                        Log.d(TAG, "date:"+date + "\ttemp:" + day.getTempInteger());
+                        Log.d(TAG, "------------------");
+
+                        weatherForecastList.add(day);
+
+
+                        weatherDays.add(day);
+                    }
+                }
+
+                WeatherAdapter adapter = new WeatherAdapter(MainActivity.this, R.layout.list_item, weatherForecastList, allDays);
+                listView = findViewById(R.id.listview);
+                listView.setAdapter(adapter);
+
+
+                RecyclerView recyclerView = findViewById(R.id.recyclerView);
+                RecyclerViewHorizontalListAdapter horizontalListAdapter = new RecyclerViewHorizontalListAdapter(weatherDays, getApplicationContext());
+                LinearLayoutManager layoutManager = new LinearLayoutManager(MainActivity.this, LinearLayoutManager.HORIZONTAL, false);
+                recyclerView.setLayoutManager(layoutManager);
+                recyclerView.setAdapter(horizontalListAdapter);
+                //horizontalListAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
+
+    @Override
+    public void onGetCurrentLocation(String currentAddress) {
+
+        Toast.makeText(MainActivity.this, "currentAddress:" + currentAddress, Toast.LENGTH_SHORT).show();
+        System.out.println("currentAddress:" + currentAddress);
+
+        GlobalConstants.IsLocationDetected = true;
+
+        weatherDayLiveData = weatherViewModel.getTodayData();
+        weatherForecastLiveData = weatherViewModel.getForecastData();
+    }
+
+
+    private void setTodayUI(WeatherDay weatherDay) {
+        System.out.println("weatherDay :: " + weatherDay);
+        if (weatherDay != null) {
+
+            System.out.println("CITY EN:" + GlobalConstants.CURRENT_CITY_EN);
+            System.out.println("CITY UA:" + GlobalConstants.CURRENT_CITY_UA);
+            toolbar.setTitle(GlobalConstants.CURRENT_CITY_UA);
+            System.out.println("WEATHER:" + weatherDay.getCity());
+
+            String strTemp = weatherDay.getTempMax().substring(0,weatherDay.getTempMax().length()-2).concat("˚/")
+                    .concat(weatherDay.getTempMin().substring(0, weatherDay.getTempMin().length()-2).concat("˚"));
+            tvTemp.setText(strTemp);
+            String strHumidity = weatherDay.getHumidity().substring(0, weatherDay.getHumidity().length()-2).concat("%");
+            tvHumidity.setText(strHumidity);
+            tvDate.setText(weatherDay.getDescription().getDescription());
+            String strWind = weatherDay.getSpeed().substring(0, weatherDay.getSpeed().length()-2).concat("м/сек");
+            tvWind.setText(strWind);
+            //tvDate.setText(data.getDate());
+        }
+    }
 
 
 
@@ -237,29 +249,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void getWeatherToday() {
 
-    public void getWeather(View view) {
-        String units = "metric";
-        String key = GlobalConstants.KEY;
-
-        Log.d(TAG, "OK");
-
-
-        Log.d(TAG, "CURRENT_CITY:" + GlobalConstants.CURRENT_CITY_EN);
         toolbar.setTitle(GlobalConstants.CURRENT_CITY_UA);
-        Call<WeatherDay> dayCall = api.getToday(GlobalConstants.CURRENT_CITY_EN, units, key);
+        Call<WeatherDay> dayCall = api.getToday(GlobalConstants.CURRENT_CITY_EN, GlobalConstants.UNITS, GlobalConstants.KEY);
         dayCall.enqueue(new Callback<WeatherDay>() {
             @Override
             public void onResponse(Call<WeatherDay> call, Response<WeatherDay> response) {
-                Log.d(TAG, "response:" + response.toString());
                 WeatherDay data = response.body();
                 if (data != null) {
-
                     String strTemp = data.getTempInteger().concat("˚/").concat(data.getTempInteger().concat("˚"));
                     tvTemp.setText(strTemp);
                     String strHumidity = data.getHumidity().concat("%");
                     tvHumidity.setText(strHumidity);
-                    //tvDate.setText(data.getDate());
                     String strWind = data.getSpeed().concat("м/сек");
                     tvWind.setText(strWind);
                 }
@@ -271,13 +273,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void getWeatherForecast(View view) {
+        Log.d(TAG, "CURRENT_CITY:" + GlobalConstants.CURRENT_CITY_EN);
+        toolbar.setTitle(GlobalConstants.CURRENT_CITY_UA);
 
         // get weather forecast
-        Call<WeatherForecast> callForecast = api.getForecast(GlobalConstants.CURRENT_CITY_EN, units, key);
+        Call<WeatherForecast> callForecast = api.getForecast(GlobalConstants.CURRENT_CITY_EN, GlobalConstants.UNITS, GlobalConstants.KEY);
         callForecast.enqueue(new Callback<WeatherForecast>() {
             @Override
             public void onResponse(Call<WeatherForecast> call, Response<WeatherForecast> response) {
-                Log.e(TAG, "onResponse");
+                Log.d(TAG, "response2:" + response.toString());
                 WeatherForecast data = response.body();
                 Log.d(TAG,response.toString());
 
@@ -308,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    ProductAdapter adapter = new ProductAdapter(MainActivity.this, R.layout.list_item, weatherDays);
+                    WeatherAdapter adapter = new WeatherAdapter(MainActivity.this, R.layout.list_item, weatherDays, allDays);
                     listView = findViewById(R.id.listview);
                     listView.setAdapter(adapter);
 
@@ -329,11 +336,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-    }
-
-    public int convertDPtoPX(int dp, Context ctx) {
-        float density = ctx.getResources().getDisplayMetrics().density;
-        int px = (int)(dp * density);
-        return px;
     }
 }

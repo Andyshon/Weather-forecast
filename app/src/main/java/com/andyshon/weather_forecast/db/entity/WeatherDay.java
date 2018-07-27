@@ -114,6 +114,13 @@ public class WeatherDay {
 
     public String getTempWithDegree() { return String.valueOf(temp.temp.intValue()) + "\u00B0"; }
 
+    public String getTempMaxIntegerWithDegree() {
+        return String.valueOf(temp.temp_max.intValue()).concat("\u00B0");
+    }
+    public String getTempMinIntegerWithDegree() {
+        return String.valueOf(temp.temp_min.intValue()).concat("\u00B0");
+    }
+
     public String getCity() { return city; }
 
     public String getIcon() { return desctiption.get(0).icon; }
