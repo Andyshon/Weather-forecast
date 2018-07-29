@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 
 import com.andyshon.weather_forecast.GlobalConstants;
 import com.andyshon.weather_forecast.db.RestClient;
-import com.andyshon.weather_forecast.db.entity.WeatherDay;
+import com.andyshon.weather_forecast.db.entity.WeatherDayHourForecastList;
 import com.andyshon.weather_forecast.db.entity.WeatherForecast;
 
 import retrofit2.Call;
@@ -20,27 +20,44 @@ import retrofit2.Response;
 
 public class WeatherViewModel extends ViewModel {
 
-    private MutableLiveData<WeatherDay> weatherDayLiveData;
     private MutableLiveData<WeatherForecast> weatherForecastLiveData;
+    private MutableLiveData<WeatherDayHourForecastList> weatherDayHourForecastLiveData;
 
-    public LiveData<WeatherDay> getTodayData() {
-        if (GlobalConstants.CURRENT_CITY_EN == null)
-            weatherDayLiveData = new MutableLiveData<>();
-        else
-            loadTodayData();
-        return weatherDayLiveData;
-    }
 
     public LiveData<WeatherForecast> getForecastData() {
         if (GlobalConstants.CURRENT_CITY_EN == null)
             weatherForecastLiveData = new MutableLiveData<>();
         else
-            loadForecastData();
+            loadForecastDataByCityName();
         return weatherForecastLiveData;
     }
 
-    private void loadForecastData() {
-        RestClient.getService().getForecast(GlobalConstants.CURRENT_CITY_EN, GlobalConstants.UNITS, GlobalConstants.KEY)
+    public LiveData<WeatherDayHourForecastList> getHourForecastData() {
+        if (GlobalConstants.CURRENT_CITY_EN == null)
+            weatherDayHourForecastLiveData = new MutableLiveData<>();
+        else
+            loadHourForecastDataByCityName();
+        return weatherDayHourForecastLiveData;
+    }
+
+    private void loadHourForecastDataByCityName() {
+        RestClient.getService().getHourForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 9, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
+                .enqueue(new Callback<WeatherDayHourForecastList>() {
+                    @Override
+                    public void onResponse(@NonNull Call<WeatherDayHourForecastList> call, @NonNull Response<WeatherDayHourForecastList> response) {
+                        weatherDayHourForecastLiveData.postValue(response.body());
+                        System.out.println("hasActiveObservers hour forecast:" + weatherDayHourForecastLiveData.hasActiveObservers());
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<WeatherDayHourForecastList> call, @NonNull Throwable t) {
+                        System.out.println("onFailure hour forecast");
+                    }
+                });
+    }
+
+    private void loadForecastDataByCityName() {
+        RestClient.getService().getForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 5, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
                 .enqueue(new Callback<WeatherForecast>() {
                     @Override
                     public void onResponse(@NonNull Call<WeatherForecast> call, @NonNull Response<WeatherForecast> response) {
@@ -51,23 +68,6 @@ public class WeatherViewModel extends ViewModel {
                     @Override
                     public void onFailure(@NonNull Call<WeatherForecast> call, @NonNull Throwable t) {
                         System.out.println("onFailure forecast");
-                    }
-                });
-    }
-
-    private void loadTodayData() {
-        System.out.println("111:" + GlobalConstants.CURRENT_CITY_EN);
-        RestClient.getService().getToday(GlobalConstants.CURRENT_CITY_EN, GlobalConstants.UNITS, GlobalConstants.KEY)
-                .enqueue(new Callback<WeatherDay>() {
-                    @Override
-                    public void onResponse(@NonNull Call<WeatherDay> call, @NonNull Response<WeatherDay> response) {
-                        weatherDayLiveData.postValue(response.body());
-                        System.out.println("hasActiveObservers:" + weatherDayLiveData.hasActiveObservers());
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<WeatherDay> call, @NonNull Throwable t) {
-                        System.out.println("onFailure!");
                     }
                 });
     }

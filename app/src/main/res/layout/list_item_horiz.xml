@@ -4,8 +4,8 @@
     android:layout_height="wrap_content"
     android:paddingTop="15dp"
     android:paddingBottom="15dp"
-    android:paddingStart="30dp"
-    android:paddingEnd="30dp">
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
     <TextView
         android:id="@+id/tvTime"
         android:layout_width="50dp"
@@ -15,13 +15,14 @@
         android:textSize="20sp"/>
     <ImageView
         android:id="@+id/ivWeatherState"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_width="50dp"
         android:layout_height="50dp"/>
     <TextView
         android:id="@+id/tvTemp"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:layout_marginTop="-10dp"
         android:gravity="center"
         android:textColor="#fff"
         android:textSize="20sp"/>

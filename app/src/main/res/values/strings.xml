@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Weather-forecast</string>
     <string name="ph_19_29">19˚/29˚</string>
-    <string name="ph_95_0">95.0%</string>
-    <string name="ph_2_36">2.36м/сек</string>
+    <string name="ph_95">95%</string>
+    <string name="ph_2">2м/сек</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

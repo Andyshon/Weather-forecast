@@ -14,19 +14,17 @@ public class RestClient {
 
     private RestClient() {}
 
-    public static IService initService() {
+    public static void initService() {
 
         if (iService == null) {
 
             restAdapter = new retrofit2.Retrofit.Builder()
-                    .baseUrl(GlobalConstants.BASE_URL)
+                    .baseUrl(GlobalConstants.ApiConstants.BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
             iService = restAdapter.create(IService.class);
-            return getService();
         }
-        return getService();
     }
 
     public static IService getService() {

@@ -44,7 +44,7 @@ public class LocationDetector extends AppCompatActivity{
 
 
     public interface MyCallback {
-        void onGetCurrentLocation(String currentAddress);
+        void onGetUserLocation();
     }
 
 
@@ -137,20 +137,11 @@ public class LocationDetector extends AppCompatActivity{
                 Toast.makeText(context, "Address not found, " , Toast.LENGTH_SHORT).show();
             }
 
-            String currentAdd = resultData.getString("address_result");
+            //String currentAdd = resultData.getString("address_result");
 
-            showResults(currentAdd);
+            callback.onGetUserLocation();
+            fusedLocationClient.removeLocationUpdates(locationCallback);
         }
-    }
-
-
-    private void showResults(String currentAdd){
-        //Toast.makeText(context, "currentAdd:" + currentAdd, Toast.LENGTH_SHORT).show();
-        //System.out.println("currentAdd:" + currentAdd);
-        //fusedLocationClient.removeLocationUpdates(locationCallback);
-
-        callback.onGetCurrentLocation(currentAdd);
-        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
 }
