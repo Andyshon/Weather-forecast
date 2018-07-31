@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.adapter;
 
 import android.content.Context;
 import android.databinding.DataBindingUtil;
@@ -12,6 +12,7 @@ import android.widget.Filterable;
 import com.andyshon.weather_forecast.GlobalConstants;
 import com.andyshon.weather_forecast.R;
 import com.andyshon.weather_forecast.databinding.RowItemBinding;
+import com.andyshon.weather_forecast.ui.activity.MapsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +29,14 @@ public class MapsListAdapter extends BaseAdapter implements Filterable {
     private LayoutInflater inflater;
     private Context context;
 
+    private MapsCallback callback;
 
-    public MapsListAdapter(Context context, List<String> cancel_type) {
+
+    public MapsListAdapter(Context context, List<String> cancel_type, MapsCallback callback) {
         this.context = context;
         mData=cancel_type;
         mStringFilterList = cancel_type;
+        this.callback = callback;
     }
 
 
@@ -63,12 +67,14 @@ public class MapsListAdapter extends BaseAdapter implements Filterable {
         RowItemBinding rowItemBinding = DataBindingUtil.inflate(inflater, R.layout.row_item, parent, false);
         rowItemBinding.stringName.setText(mData.get(position));
 
+        // only russian cities names
         rowItemBinding.rowCity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String newCity = mData.get(position).trim();
-                GlobalConstants.setCurrentCity(newCity);
-                ((MapsActivity)context).findCityByName(newCity);
+                String city = mData.get(position).trim();
+                GlobalConstants.setCurrentCityRU(city);
+                GlobalConstants.updateCurrentCity(city, 2);
+                ((MapsActivity)context).findCityByName(GlobalConstants.CURRENT_CITY_EN);
             }
         });
 
@@ -100,7 +106,7 @@ public class MapsListAdapter extends BaseAdapter implements Filterable {
                 results.count = filterList.size();
                 results.values = filterList;
             } else {
-                ((MapsActivity)context).setMapFragment();
+                callback.onSetMapFragment();
                 results.count = mStringFilterList.size();
                 results.values = mStringFilterList;
             }
@@ -115,6 +121,11 @@ public class MapsListAdapter extends BaseAdapter implements Filterable {
                 notifyDataSetChanged();
             }
         }
+    }
+
+
+    public interface MapsCallback {
+        void onSetMapFragment();
     }
 
 }

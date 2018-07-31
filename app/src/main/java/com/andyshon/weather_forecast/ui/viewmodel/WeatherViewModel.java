@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.viewmodel;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
@@ -25,23 +25,29 @@ public class WeatherViewModel extends ViewModel {
 
 
     public LiveData<WeatherForecast> getForecastData() {
-        if (GlobalConstants.CURRENT_CITY_EN == null)
+        if (weatherForecastLiveData == null) {
             weatherForecastLiveData = new MutableLiveData<>();
+            loadForecastDataByCityName();
+        }
         else
             loadForecastDataByCityName();
         return weatherForecastLiveData;
     }
 
     public LiveData<WeatherDayHourForecastList> getHourForecastData() {
-        if (GlobalConstants.CURRENT_CITY_EN == null)
+        System.out.println("weatherDayHourForecastLiveData:" + weatherDayHourForecastLiveData);
+        if (weatherDayHourForecastLiveData == null) {
             weatherDayHourForecastLiveData = new MutableLiveData<>();
+            loadHourForecastDataByCityName();
+        }
         else
             loadHourForecastDataByCityName();
         return weatherDayHourForecastLiveData;
     }
 
     private void loadHourForecastDataByCityName() {
-        RestClient.getService().getHourForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 9, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
+        System.out.println("SDFSF:" + GlobalConstants.CURRENT_LOCATION_CITY_EN);
+        RestClient.getService().getHourForecastByCityName(GlobalConstants.CURRENT_LOCATION_CITY_EN, 9, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
                 .enqueue(new Callback<WeatherDayHourForecastList>() {
                     @Override
                     public void onResponse(@NonNull Call<WeatherDayHourForecastList> call, @NonNull Response<WeatherDayHourForecastList> response) {
@@ -57,6 +63,7 @@ public class WeatherViewModel extends ViewModel {
     }
 
     private void loadForecastDataByCityName() {
+        System.out.println("SDFSF 2:" + GlobalConstants.CURRENT_CITY_EN);
         RestClient.getService().getForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 5, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
                 .enqueue(new Callback<WeatherForecast>() {
                     @Override

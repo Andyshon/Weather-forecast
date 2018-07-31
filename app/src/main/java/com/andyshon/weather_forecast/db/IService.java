@@ -1,8 +1,8 @@
 package com.andyshon.weather_forecast.db;
 
 import com.andyshon.weather_forecast.db.entity.WeatherDayHourForecastList;
-import com.andyshon.weather_forecast.db.entity.WeatherToday;
 import com.andyshon.weather_forecast.db.entity.WeatherForecast;
+import com.andyshon.weather_forecast.db.entity.WeatherToday;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

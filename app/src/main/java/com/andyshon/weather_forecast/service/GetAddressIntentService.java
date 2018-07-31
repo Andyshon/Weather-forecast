@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast;
+package com.andyshon.weather_forecast.service;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
 import android.util.Log;
+
+import com.andyshon.weather_forecast.GlobalConstants;
 
 import java.util.List;
 import java.util.Locale;
@@ -74,7 +76,7 @@ public class GetAddressIntentService extends IntentService {
             addressDetails.append(address.getLocality());
             addressDetails.append("\n");
 
-            GlobalConstants.setCurrentCity(address.getLocality());
+            GlobalConstants.updateCurrentLocationCity(address.getLocality());
 
             addressDetails.append("County: ");
             addressDetails.append(address.getSubAdminArea());

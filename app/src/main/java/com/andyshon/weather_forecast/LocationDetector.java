@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.andyshon.weather_forecast.service.GetAddressIntentService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -58,9 +59,8 @@ public class LocationDetector extends AppCompatActivity{
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
-                System.out.println("CALLBACK");
                 currentLocation = locationResult.getLocations().get(0);
-                System.out.println("CALLBACK:" + currentLocation);
+                System.out.println("currentLocation:" + currentLocation);
                 getAddress();
             };
         };
@@ -138,6 +138,7 @@ public class LocationDetector extends AppCompatActivity{
             }
 
             //String currentAdd = resultData.getString("address_result");
+            Log.d("LOCATION_DETECTOR", resultData.getString("address_result"));
 
             callback.onGetUserLocation();
             fusedLocationClient.removeLocationUpdates(locationCallback);

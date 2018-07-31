@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#efefef"
-    tools:context=".ui.MapsActivity">
+    tools:context=".ui.activity.MapsActivity">
 
     <!-- Adding bottom sheet after main content -->
     <LinearLayout
@@ -68,9 +68,6 @@
             android:id="@+id/list_view"
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
-            android:layout_below="@+id/toolbar"
-            android:layout_centerHorizontal="true"
-            android:layout_centerInParent="true"
             android:divider="@null"
             android:dividerHeight="0dp" />
 

@@ -23,8 +23,9 @@ public class WeatherUtils {
     }
 
     /*
-    * Convert city from RU to EN
+    * Convert city from RU to EN -- no need since OpenWeatherApi can find city from russian name, but sometimes isn't understand all the provided names :(
     * */
+    @Deprecated
     public static String fromRUtoEN (String city) {
         if (city != null) {
             for (int i = 0; i < GlobalConstants.getCitiesRuList().size(); i++) {
@@ -34,7 +35,7 @@ public class WeatherUtils {
                 }
             }
         }
-        return GlobalConstants.getCitiesEnList().get(0);
+        return city;
     }
 
     public static int getIconByWeatherState(String weatherState, boolean isDayNow) {

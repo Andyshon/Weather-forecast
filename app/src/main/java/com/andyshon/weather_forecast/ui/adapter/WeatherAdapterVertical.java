@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.adapter;
 
 import android.graphics.Color;
 import android.support.annotation.Nullable;
@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.andyshon.weather_forecast.R;
 import com.andyshon.weather_forecast.db.entity.WeatherFiveDaysForecast;
+import com.andyshon.weather_forecast.ui.WeatherClickCallback;
 import com.andyshon.weather_forecast.utils.WeatherUtils;
 
 import java.text.SimpleDateFormat;

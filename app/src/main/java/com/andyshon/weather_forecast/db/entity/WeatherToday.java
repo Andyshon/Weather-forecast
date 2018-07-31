@@ -1,47 +1,31 @@
 package com.andyshon.weather_forecast.db.entity;
 
+import android.arch.persistence.room.Embedded;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverters;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
 /**
- * Created by andyshon on 26.07.18.
+ * Created by andyshon on 30.07.18.
  */
 
+@Entity(tableName = "favourites_weather")
 public class WeatherToday {
 
-    public class WeatherDescription {
-        public int id;
-        public String description;
-        public String main;
-        public String icon;
-    }
+    public WeatherToday() {}
 
-    class WeatherMain {
-        Double temp;
-        Double temp_min;
-        Double temp_max;
-        Double pressure;
-        Double humidity;
-    }
+    @PrimaryKey(autoGenerate = true)
+    private int id;
 
-    class WeatherWind {
-        Double speed;
-        Double deg;
-    }
-
-    public WeatherToday(List<WeatherDescription> description, WeatherMain temp, WeatherWind wind) {
-        this.description = description;
-        this.temp = temp;
-        this.wind = wind;
-    }
-
+    @Embedded
     @SerializedName("main")
     private WeatherMain temp;
 
-    @SerializedName("weather")
-    private List<WeatherDescription> description;
-
+    @Embedded
     @SerializedName("wind")
     private WeatherWind wind;
 
@@ -51,48 +35,56 @@ public class WeatherToday {
     @SerializedName("name")
     private String city;
 
+    @TypeConverters(ListTypeConverters.class)
+    @SerializedName("weather")
+    private List<WeatherDescription> description;
+
+
+    public void setDescription(List<WeatherDescription> description) {
+        this.description = description;
+    }
+
+    public List<WeatherDescription> getDescription() {
+        return description;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public WeatherMain getTemp() {
+        return temp;
+    }
+
+    public void setTemp(WeatherMain temp) {
+        this.temp = temp;
+    }
+
+    public WeatherWind getWind() {
+        return wind;
+    }
+
+    public void setWind(WeatherWind wind) {
+        this.wind = wind;
+    }
 
     public long getDt() {
         return dt;
     }
 
-    public String getSpeed() {
-        return String.valueOf(wind.speed.intValue());
-    }
-
-    public String getDeg() {
-        return String.valueOf(wind.deg.intValue());
-    }
-
-    public String getTempInteger() {
-        return String.valueOf(temp.temp.intValue());
-    }
-
-    public String getPressure() {
-        return String.valueOf(temp.pressure.intValue());
-    }
-
-    public String getHumidity() {
-        return String.valueOf(temp.humidity.intValue());
-    }
-
-    public String getTempMaxInteger() {
-        return String.valueOf(temp.temp_max.intValue());
-    }
-
-    public String getTempMinInteger() {
-        return String.valueOf(temp.temp_min.intValue());
-    }
-
-    public WeatherDescription getMain() {
-        return description.get(0);
-    }
-
-    public WeatherDescription getDescription() {
-        return description.get(0);
+    public void setDt(long dt) {
+        this.dt = dt;
     }
 
     public String getCity() {
         return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 }

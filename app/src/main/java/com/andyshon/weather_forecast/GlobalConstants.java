@@ -1,7 +1,15 @@
 package com.andyshon.weather_forecast;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import java.util.Arrays;
 import java.util.List;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by andyshon on 26.07.18.
@@ -16,114 +24,84 @@ public class GlobalConstants {
     }
 
     public static String CURRENT_CITY_EN;
-    public static String CURRENT_CITY_UA;
+    public static String CURRENT_CITY_RU;
+
+    public static String CURRENT_LOCATION_CITY_RU;
+    public static String CURRENT_LOCATION_CITY_EN;
 
     public static boolean IsLocationDetected = false;
 
 
     /*
-    * Convert city name from ukrainian to english
+    * Updating and converting location/city name to appropriate language
     * */
-    public static void setCurrentCity (String city) {
-        CURRENT_CITY_UA = city;
 
-        if (city.equals(citiesRU[0])) {
-            CURRENT_CITY_EN = citiesEN[0];
-        }
-        else if (city.equals(citiesRU[1])) {
-            CURRENT_CITY_EN = citiesEN[1];
-        }
-        else if (city.equals(citiesRU[2])) {
-            CURRENT_CITY_EN = citiesEN[2];
-        }
-        else if (city.equals(citiesRU[3])) {
-            CURRENT_CITY_EN = citiesEN[3];
-        }
-        else if (city.equals(citiesRU[4])) {
-            CURRENT_CITY_EN = citiesEN[4];
-        }
-        else if (city.equals(citiesRU[5])) {
-            CURRENT_CITY_EN = citiesEN[5];
-        }
-        else if (city.equals(citiesRU[6])) {
-            CURRENT_CITY_EN = citiesEN[6];
-        }
-        else if (city.equals(citiesRU[7])) {
-            CURRENT_CITY_EN = citiesEN[7];
-        }
-        else if (city.equals(citiesRU[8])) {
-            CURRENT_CITY_EN = citiesEN[8];
-        }
-        else if (city.equals(citiesRU[9])) {
-            CURRENT_CITY_EN = citiesEN[9];
-        }
-        else if (city.equals(citiesRU[10])) {
-            CURRENT_CITY_EN = citiesEN[10];
-        }
-        else if (city.equals(citiesRU[11])) {
-            CURRENT_CITY_EN = citiesEN[11];
-        }
-        else if (city.equals(citiesRU[12])) {
-            CURRENT_CITY_EN = citiesEN[12];
-        }
-        else if (city.equals(citiesRU[13])) {
-            CURRENT_CITY_EN = citiesEN[13];
-        }
-        else if (city.equals(citiesRU[14])) {
-            CURRENT_CITY_EN = citiesEN[14];
-        }
-        else if (city.equals(citiesRU[15])) {
-            CURRENT_CITY_EN = citiesEN[15];
-        }
-        else if (city.equals(citiesRU[16])) {
-            CURRENT_CITY_EN = citiesEN[16];
-        }
-        else if (city.equals(citiesRU[17])) {
-            CURRENT_CITY_EN = citiesEN[17];
-        }
-        else if (city.equals(citiesRU[18])) {
-            CURRENT_CITY_EN = citiesEN[18];
-        }
-        else if (city.equals(citiesRU[19])) {
-            CURRENT_CITY_EN = citiesEN[19];
-        }
-        else if (city.equals(citiesRU[20])) {
-            CURRENT_CITY_EN = citiesEN[20];
-        }
-        else if (city.equals(citiesRU[21])) {
-            CURRENT_CITY_EN = citiesEN[21];
-        }
-        else if (city.equals(citiesRU[22])) {
-            CURRENT_CITY_EN = citiesEN[22];
-        }
-        else if (city.equals(citiesRU[23])) {
-            CURRENT_CITY_EN = citiesEN[23];
-        }
-        else if (city.equals(citiesRU[24])) {
-            CURRENT_CITY_EN = citiesEN[24];
-        }
-        else if (city.equals(citiesRU[25])) {
-            CURRENT_CITY_EN = citiesEN[25];
-        }
-        else if (city.equals(citiesRU[26])) {
-            CURRENT_CITY_EN = citiesEN[26];
-        }
-        else if (city.equals(citiesRU[27])) {
-            CURRENT_CITY_EN = citiesEN[27];
-        }
-        else CURRENT_CITY_EN = citiesEN[0];
+    public static void updateCurrentLocationCity (String city) {
+        CURRENT_LOCATION_CITY_RU = city;
+        fromRuToENLocation(city);
     }
+
+    public static void updateCurrentCity(String city, int toRu_1_toEn_2) {
+        if (toRu_1_toEn_2 == 2) { // from RU to EN
+            fromRuToEN(city);
+        }
+        else {} // from EN to RU - no usage needed
+    }
+
+    private static void fromRuToENLocation(String city) {
+        boolean isCityFound = false;
+        for (int i=0; i<citiesRU.length; i++) {
+            if (city.equals(citiesRU[i])) {
+                isCityFound = true;
+                CURRENT_CITY_EN = citiesEN[i];
+                CURRENT_LOCATION_CITY_EN = citiesEN[i];
+            }
+        }
+        if (!isCityFound) {
+            CURRENT_CITY_EN = citiesEN[0];  // Zaporizhzhya, maybe it should be the last location stored in db
+            CURRENT_LOCATION_CITY_EN = citiesEN[0];
+        }
+    }
+
+    private static void fromRuToEN (String city) {
+        CURRENT_CITY_RU = city;
+
+        System.out.println("fromRuToEN = " + city);
+        System.out.println("last location = " + CURRENT_LOCATION_CITY_EN);
+
+        boolean isCityFound = false;
+        for (int i=0; i<citiesRU.length; i++) {
+            if (city.equals(citiesRU[i])) {
+                isCityFound = true;
+                CURRENT_CITY_EN = citiesEN[i];
+            }
+        }
+        if (!isCityFound) {
+            CURRENT_CITY_EN = CURRENT_LOCATION_CITY_EN;  // last found location
+        }
+    }
+
+    public static void setCurrentCityRU(String city) {
+        CURRENT_CITY_RU = city;
+    }
+
+    public static void setCurrentCityEN(String city) {
+        CURRENT_CITY_EN = city;
+    }
+
 
     private static String[] citiesEN = {
             "Zaporizhzhya", "Lviv", "Chernivtsi", "Nikopol", "Uzhhorod", "Kiev", "Vinnytsya", "Berdyansk", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Ivano-Frankivsk",
             "Kirovohrad", "Luhansk", "Lutsk", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sevastopol", "Simferopol", "Sumy", "Ternopil", "Khmelnytskyi",
-            "Kharkiv", "Kherson", "Cherkasy", "Chernihiv"
+            "Kharkiv", "Kherson", "Cherkasy", "Chernihiv", "Abkhazia", "Afghanistan", "Tirana", "Argentina", "Armenia", "Yerevan", "Australia", "Baku", "Vienna",
+            "Bangladesh", "Azerbaijan", "Minsk", "Belarus"
     };
 
     private static String[] citiesRU = {
             "Запорожье", "Львов", "Черновцы", "Никополь", "Ужгород", "Киев", "Винница", "Бердянск", "Днепр", "Донецк", "Житомир", "Ивано-Франковск",
             "Кировоград", "Луганск", "Луцк", "Николаев", "Одесса", "Полтава", "Ровно", "Севастополь", "Симферополь", "Суммы", "Тернополь", "Хмельницк",
-            "Харков", "Херсон", "Черкасы", "Чернигов"
+            "Харков", "Херсон", "Черкасы", "Чернигов", "Абхазия", "Афганистан", "Тирана", "Аргентина", "Армения", "Эреван", "Австралия", "Баку", "Венна", "Бангладеш",
+            "Азербайджан", "Минск", "Беларусь"
     };
 
     public static List<String> getCitiesRuList() {
@@ -132,5 +110,41 @@ public class GlobalConstants {
 
     public static List<String> getCitiesEnList() {
         return Arrays.asList(citiesEN);
+    }
+
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+
+    public static class Preferences {
+
+        private static final String SAVED_LOCATION_EN = "SPL_en";
+        private static final String SAVED_LOCATION_RU = "SPL_ru";
+
+        public static void saveLastUserLocation(Context context) {
+            GlobalConstants.IsLocationDetected = true;
+            SharedPreferences sPref = ((Activity)context).getPreferences(MODE_PRIVATE);
+            SharedPreferences.Editor ed = sPref.edit();
+            ed.putString(SAVED_LOCATION_EN, GlobalConstants.CURRENT_LOCATION_CITY_EN);
+            ed.putString(SAVED_LOCATION_RU, GlobalConstants.CURRENT_LOCATION_CITY_RU);
+            ed.apply();
+        }
+
+        public static void loadLastUserLocation(Context context) {
+            SharedPreferences sPref = ((Activity)context).getPreferences(MODE_PRIVATE);
+            String savedLocation_en = sPref.getString(SAVED_LOCATION_EN, "");
+            String savedLocation_ru = sPref.getString(SAVED_LOCATION_RU, "");
+            if (!savedLocation_en.isEmpty() && !savedLocation_ru.isEmpty()) {
+                GlobalConstants.IsLocationDetected = true;
+            }
+            GlobalConstants.CURRENT_LOCATION_CITY_EN = savedLocation_en;
+            GlobalConstants.CURRENT_LOCATION_CITY_RU = savedLocation_ru;
+            GlobalConstants.CURRENT_CITY_EN = savedLocation_en;
+            GlobalConstants.CURRENT_CITY_RU = savedLocation_ru;
+        }
+
     }
 }

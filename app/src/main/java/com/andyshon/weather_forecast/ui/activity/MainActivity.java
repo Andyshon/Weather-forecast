@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.activity;
 
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LiveData;
@@ -25,6 +25,10 @@ import com.andyshon.weather_forecast.db.entity.WeatherDayHourForecast;
 import com.andyshon.weather_forecast.db.entity.WeatherDayHourForecastList;
 import com.andyshon.weather_forecast.db.entity.WeatherFiveDaysForecast;
 import com.andyshon.weather_forecast.db.entity.WeatherForecast;
+import com.andyshon.weather_forecast.ui.adapter.WeatherAdapterHorizontal;
+import com.andyshon.weather_forecast.ui.adapter.WeatherAdapterVertical;
+import com.andyshon.weather_forecast.ui.WeatherClickCallback;
+import com.andyshon.weather_forecast.ui.viewmodel.WeatherViewModel;
 import com.andyshon.weather_forecast.utils.WeatherUtils;
 
 import java.util.ArrayList;
@@ -49,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
     private RecyclerView recyclerView, recyclerView2;
 
-    private static final int REQUEST_CODE_CHOOSE_CITY = 1;
+    private static final int REQUEST_CODE_DISPLAY_CITY = 1;
 
     /*
     * Any fool can write code that a computer can understand. Good programmers write code that humans can understand..
@@ -71,13 +75,14 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (data == null) {return;}
         if (resultCode == RESULT_OK) {
-            if (requestCode == REQUEST_CODE_CHOOSE_CITY) {
+            if (requestCode == REQUEST_CODE_DISPLAY_CITY) {
                 String city = data.getStringExtra("city");
                 tvCityName.setText(city);
 
-                showProgressbar();
-                weatherForecastLiveData = weatherViewModel.getForecastData();
-                weatherDayHourForecastLiveData = weatherViewModel.getHourForecastData();
+                subscribeUI();
+            }
+            else {
+                Toast.makeText(this, "Wrong requestCode :(", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -86,6 +91,16 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //deleteDatabase(AppDatabase.DATABASE_NAME);
+
+
+        GlobalConstants.Preferences.loadLastUserLocation(this);
+        System.out.println("loadLastUserLocation:" + GlobalConstants.CURRENT_LOCATION_CITY_EN);
+        System.out.println("loadLastUserLocation:" + GlobalConstants.CURRENT_LOCATION_CITY_RU);
+        System.out.println("loadLastUserLocation:" + GlobalConstants.CURRENT_CITY_EN);
+        System.out.println("loadLastUserLocation:" + GlobalConstants.CURRENT_CITY_RU);
+
 
 
         progressBar = findViewById(R.id.progressBar);
@@ -98,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
             public void onClick(View view) {
                 //Intent intent = new Intent(MainActivity.this, SearchActivity.class);
                 Intent intent = new Intent(MainActivity.this, MapsActivity.class);
-                startActivityForResult(intent, REQUEST_CODE_CHOOSE_CITY);
+                startActivityForResult(intent, REQUEST_CODE_DISPLAY_CITY);
             }
         });
 
@@ -107,13 +122,13 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
             @Override
             public void onClick(View view) {
                 Toast.makeText(MainActivity.this, "refresh today weather", Toast.LENGTH_SHORT).show();
-                weatherForecastLiveData = weatherViewModel.getForecastData();
                 weatherDayHourForecastLiveData = weatherViewModel.getHourForecastData();
+                weatherForecastLiveData = weatherViewModel.getForecastData();
             }
         });
 
         tvCityName = findViewById(R.id.tvCityName);
-        tvCityName.setText(GlobalConstants.CURRENT_CITY_UA);
+        setTitle();
 
         weatherForecastList = new ArrayList<>();
         allDaysHoursForecast = new ArrayList<>();
@@ -136,22 +151,37 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
         tvWind = findViewById(R.id.tvWind);
         ivWeatherState = (ImageView) findViewById(R.id.ivWeatherState);
 
+
         RestClient.initService();
 
+        weatherViewModel = ViewModelProviders.of(this).get(WeatherViewModel.class);
+
+        // for emulator turn off LocationDetector and set CURRENT_CITY_EN directly
 
         if (!GlobalConstants.IsLocationDetected) {
             System.out.println("Location is not detected yet");
             new LocationDetector(this, this);
         }
-        else {
-            System.out.println("Location already detected");
+
+
+        subscribeUI();
+
+    }
+
+    private void setTitle(){
+        if (GlobalConstants.CURRENT_CITY_RU != null)
+            tvCityName.setText(GlobalConstants.CURRENT_CITY_RU);
+        else
+            tvCityName.setText(GlobalConstants.CURRENT_CITY_EN);
+    }
+
+
+    private void subscribeUI() {
+        if (!GlobalConstants.isNetworkAvailable(this)) {
+            Toast.makeText(this, "Сеть недоступна.", Toast.LENGTH_LONG).show();
+            return;
         }
-
-        weatherViewModel = ViewModelProviders.of(this).get(WeatherViewModel.class);
-
         showProgressbar();
-
-
         weatherDayHourForecastLiveData = weatherViewModel.getHourForecastData();
         weatherDayHourForecastLiveData.observe(this, new Observer<WeatherDayHourForecastList>() {
             @Override
@@ -189,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
         });
     }
 
+
     private void showProgressbar() {
         progressBar.setVisibility(View.VISIBLE);
     }
@@ -200,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
     private void updateTodayUI(WeatherFiveDaysForecast weatherFiveDaysForecast) {
         if (weatherFiveDaysForecast != null) {
-            tvCityName.setText(GlobalConstants.CURRENT_CITY_UA);
+            setTitle();
 
             String strTemp = splitByDot(weatherFiveDaysForecast.getTempMax()).concat("˚/").concat(splitByDot(weatherFiveDaysForecast.getTempMin()));
             tvTemp.setText(strTemp);
@@ -219,9 +250,9 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
     @Override
     public void onGetUserLocation() {
-        Toast.makeText(MainActivity.this, "Город " + GlobalConstants.CURRENT_CITY_UA, Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "Город " + GlobalConstants.CURRENT_CITY_RU, Toast.LENGTH_SHORT).show();
 
-        GlobalConstants.IsLocationDetected = true;
+        GlobalConstants.Preferences.saveLastUserLocation(this);
 
         weatherDayHourForecastLiveData = weatherViewModel.getHourForecastData();
         weatherForecastLiveData = weatherViewModel.getForecastData();
@@ -232,5 +263,11 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
         String[] splitMas = string.split("\\.");
         // since i need first element -> no need to check splitMas length
         return splitMas[0];
+    }
+
+
+    public void onFavourites(View view) {
+        Intent intent = new Intent(MainActivity.this, FavouritesActivity.class);
+        startActivityForResult(intent, REQUEST_CODE_DISPLAY_CITY);
     }
 }

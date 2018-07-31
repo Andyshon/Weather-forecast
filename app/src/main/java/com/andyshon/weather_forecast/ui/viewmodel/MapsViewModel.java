@@ -1,11 +1,13 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.viewmodel;
 
+import android.app.Application;
+import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 
-import com.andyshon.weather_forecast.GlobalConstants;
+import com.andyshon.weather_forecast.db.BasicApp;
+import com.andyshon.weather_forecast.db.DataRepository;
 import com.andyshon.weather_forecast.db.RestClient;
 import com.andyshon.weather_forecast.db.entity.WeatherToday;
 
@@ -13,13 +15,23 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.andyshon.weather_forecast.GlobalConstants.ApiConstants.*;
+
 /**
  * Created by andyshon on 29.07.18.
  */
 
-public class MapsViewModel extends ViewModel {
+public class MapsViewModel extends AndroidViewModel {
     private MutableLiveData<WeatherToday> weatherDayByCoordLiveData;
     private MutableLiveData<WeatherToday> weatherDayByNameLiveData;
+
+    private DataRepository dataRepository;
+
+    public MapsViewModel(@NonNull Application application) {
+        super(application);
+
+        dataRepository = ((BasicApp) application).getRepository();
+    }
 
 
     public LiveData<WeatherToday> getTodayDataByCoordinates(double lat, double lon) {
@@ -36,8 +48,13 @@ public class MapsViewModel extends ViewModel {
     }
 
 
+    public void addToFavourite(WeatherToday favouriteEntity) {
+        dataRepository.addToFavourite(favouriteEntity);
+    }
+
+
     private void loadTodayDataByCoordinates(double lat, double lon) {
-        RestClient.getService().getTodayByCoordinates(lat, lon, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
+        RestClient.getService().getTodayByCoordinates(lat, lon, UNITS, KEY)
                 .enqueue(new Callback<WeatherToday>() {
                     @Override
                     public void onResponse(@NonNull Call<WeatherToday> call, @NonNull Response<WeatherToday> response) {
@@ -54,7 +71,8 @@ public class MapsViewModel extends ViewModel {
 
 
     private void loadTodayDataByCityName(String name) {
-        RestClient.getService().getTodayByCityName(name, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
+        System.out.println("NAMEEE:" + name);
+        RestClient.getService().getTodayByCityName(name, UNITS, KEY)
                 .enqueue(new Callback<WeatherToday>() {
                     @Override
                     public void onResponse(@NonNull Call<WeatherToday> call, @NonNull Response<WeatherToday> response) {

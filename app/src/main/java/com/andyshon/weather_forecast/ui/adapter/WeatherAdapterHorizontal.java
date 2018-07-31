@@ -1,4 +1,4 @@
-package com.andyshon.weather_forecast.ui;
+package com.andyshon.weather_forecast.ui.adapter;
 
 import android.content.Context;
 import android.support.v7.util.DiffUtil;
