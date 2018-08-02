@@ -28,7 +28,6 @@ import static com.andyshon.weather_forecast.GlobalConstants.ApiConstants.*;
 
 public class MyWidget extends AppWidgetProvider {
 
-    private static final String _ACTION_GOTOMAINAPP = "ACTION_GOTOMAINAPP";
     private static final String _ACTION_REFRESHTEMP = "ACTION_REFRESHTEMP";
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
@@ -39,18 +38,14 @@ public class MyWidget extends AppWidgetProvider {
         refreshData(views, appWidgetManager, new ComponentName(context, MyWidget.class));
 
 
-        // Construct an Intent which is pointing this class.
-
-        Intent goToAppIntent = new Intent(context, MyWidget.class);
-        goToAppIntent.setAction(_ACTION_GOTOMAINAPP);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, goToAppIntent, 0);
+        Intent mainApp = new Intent(context, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, mainApp, 0);
         views.setOnClickPendingIntent(R.id.widgetLayout, pendingIntent);
 
         Intent refreshTempIntent = new Intent(context, MyWidget.class);
         refreshTempIntent.setAction(_ACTION_REFRESHTEMP);
         pendingIntent = PendingIntent.getBroadcast(context, 0, refreshTempIntent, 0);
         views.setOnClickPendingIntent(R.id.btnRefreshWidget, pendingIntent);
-
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -83,11 +78,6 @@ public class MyWidget extends AppWidgetProvider {
 
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidget, views);
-        }
-        else if (_ACTION_GOTOMAINAPP.equals(intent.getAction())) {
-            Intent mainApp = new Intent(context, MainActivity.class);
-            mainApp.putExtra("key", "widget");
-            context.startActivity(mainApp);
         }
     }
 
