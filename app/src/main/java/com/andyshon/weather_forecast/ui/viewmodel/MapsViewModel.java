@@ -5,6 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import com.andyshon.weather_forecast.data.BasicApp;
 import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast;
@@ -57,7 +58,8 @@ public class MapsViewModel extends AndroidViewModel {
        RestClient.getService().getForecastByCoordinates(lat, lon, 2, UNITS, KEY)
                .subscribeOn(Schedulers.io())
                .observeOn(AndroidSchedulers.mainThread())
-               .subscribe(weatherForecastToday_list -> weatherDayByCoordLiveData.postValue(weatherForecastToday_list));
+               .subscribe(weatherForecastToday_list -> weatherDayByCoordLiveData.postValue(weatherForecastToday_list),
+                       throwable -> Toast.makeText(getApplication(), "Error while loading city by coordinates", Toast.LENGTH_SHORT).show());
     }
 
 
@@ -65,6 +67,7 @@ public class MapsViewModel extends AndroidViewModel {
         RestClient.getService().getTodayForecastByCityName(name, UNITS, KEY)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(weatherForecastToday_list -> weatherDayByNameLiveData.postValue(weatherForecastToday_list));
+                .subscribe(weatherForecastToday_list -> weatherDayByNameLiveData.postValue(weatherForecastToday_list),
+                        throwable -> Toast.makeText(getApplication(), "Error while loading city by name", Toast.LENGTH_SHORT).show());
     }
 }
