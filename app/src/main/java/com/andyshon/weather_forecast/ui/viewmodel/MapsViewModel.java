@@ -59,7 +59,7 @@ public class MapsViewModel extends AndroidViewModel {
                .subscribeOn(Schedulers.io())
                .observeOn(AndroidSchedulers.mainThread())
                .subscribe(weatherForecastToday_list -> weatherDayByCoordLiveData.postValue(weatherForecastToday_list),
-                       throwable -> Toast.makeText(getApplication(), "Error while loading city by coordinates", Toast.LENGTH_SHORT).show());
+                       throwable -> Toast.makeText(getApplication(), "Error while loading city by coordinates, try again", Toast.LENGTH_SHORT).show());
     }
 
 
@@ -68,6 +68,6 @@ public class MapsViewModel extends AndroidViewModel {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(weatherForecastToday_list -> weatherDayByNameLiveData.postValue(weatherForecastToday_list),
-                        throwable -> Toast.makeText(getApplication(), "Error while loading city by name", Toast.LENGTH_SHORT).show());
+                        throwable -> Toast.makeText(getApplication(), "Cannot find city, please enter valid city name", Toast.LENGTH_SHORT).show());
     }
 }
