@@ -159,7 +159,6 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
 
     private void setTitle(){
-        System.out.println("DDDD:" + GlobalConstants.CURRENT_CITY_RU + ":" + GlobalConstants.CURRENT_CITY_EN +":" + GlobalConstants.CURRENT_LOCATION_CITY_EN);
         if (GlobalConstants.CURRENT_CITY_RU.length() != 0)
             tvCityName.setText(GlobalConstants.CURRENT_CITY_RU);
         else if (GlobalConstants.CURRENT_CITY_EN.length() != 0)
