@@ -3,7 +3,7 @@
 
     <data>
         <variable name="favourites"
-            type="com.andyshon.weather_forecast.db.entity.WeatherToday"/>
+            type="com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast"/>
         <import type="com.andyshon.weather_forecast.utils.WeatherUtils"/>
     </data>
 
@@ -29,7 +29,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="#000"
                     android:textSize="17sp"
-                    android:text='@{""+favourites.city}'/>
+                    android:text='@{""+favourites.getItems_city().getCityName()}'/>
 
                 <TextView
                     android:id="@+id/FUCK_TEXT"
@@ -45,7 +45,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/name"
                     android:textSize="12sp"
-                    android:text="@{WeatherUtils.getDateTitle(favourites.getDt())}"/>
+                    android:text="@{WeatherUtils.getDateTitle(favourites.getItems().get(0).getDt())}"/>
 
             </LinearLayout>
 

@@ -1,7 +1,8 @@
 package com.andyshon.weather_forecast.ui;
 
-import com.andyshon.weather_forecast.db.entity.WeatherFiveDaysForecast;
+
+import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast_list;
 
 public interface WeatherClickCallback {
-    void onClick(WeatherFiveDaysForecast book);
+    void onClick(WeatherTodayForecast_list fiveDaysForecast);
 }

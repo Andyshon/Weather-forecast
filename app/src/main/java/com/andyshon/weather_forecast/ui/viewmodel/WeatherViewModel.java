@@ -1,81 +1,106 @@
 package com.andyshon.weather_forecast.ui.viewmodel;
 
+import android.app.Application;
+import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.andyshon.weather_forecast.GlobalConstants;
-import com.andyshon.weather_forecast.db.RestClient;
-import com.andyshon.weather_forecast.db.entity.WeatherDayHourForecastList;
-import com.andyshon.weather_forecast.db.entity.WeatherForecast;
+import com.andyshon.weather_forecast.data.BasicApp;
+import com.andyshon.weather_forecast.data.entity.weather_today.WeatherToday;
+import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast;
+import com.andyshon.weather_forecast.data.local.DataRepository;
+import com.andyshon.weather_forecast.data.remote.RestClient;
+import com.andyshon.weather_forecast.data.entity.weather_today_hour_forecast.WeatherTodayHourForecast;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+
+import static com.andyshon.weather_forecast.GlobalConstants.ApiConstants.*;
 
 /**
  * Created by andyshon on 27.07.18.
  */
 
-public class WeatherViewModel extends ViewModel {
+public class WeatherViewModel extends AndroidViewModel {
 
-    private MutableLiveData<WeatherForecast> weatherForecastLiveData;
-    private MutableLiveData<WeatherDayHourForecastList> weatherDayHourForecastLiveData;
+    private MutableLiveData<WeatherTodayForecast> weatherForecastLiveData;
+    private MutableLiveData<WeatherTodayHourForecast> weatherDayHourForecastLiveData;
+    private MutableLiveData<WeatherToday> weatherNowWidgetLiveData;
+
+    private DataRepository dataRepository;
+
+    public WeatherViewModel(@NonNull Application application) {
+        super(application);
+
+        dataRepository = ((BasicApp) application).getRepository();
+    }
 
 
-    public LiveData<WeatherForecast> getForecastData() {
+    public LiveData<WeatherTodayForecast> getForecastData() {
         if (weatherForecastLiveData == null) {
             weatherForecastLiveData = new MutableLiveData<>();
-            loadForecastDataByCityName();
         }
-        else
-            loadForecastDataByCityName();
+        loadForecastDataByCityName();
         return weatherForecastLiveData;
     }
 
-    public LiveData<WeatherDayHourForecastList> getHourForecastData() {
-        System.out.println("weatherDayHourForecastLiveData:" + weatherDayHourForecastLiveData);
+
+    public LiveData<WeatherTodayHourForecast> getHourForecastData() {
         if (weatherDayHourForecastLiveData == null) {
             weatherDayHourForecastLiveData = new MutableLiveData<>();
-            loadHourForecastDataByCityName();
         }
-        else
-            loadHourForecastDataByCityName();
+        loadHourForecastDataByCityName();
         return weatherDayHourForecastLiveData;
     }
 
-    private void loadHourForecastDataByCityName() {
-        System.out.println("SDFSF:" + GlobalConstants.CURRENT_LOCATION_CITY_EN);
-        RestClient.getService().getHourForecastByCityName(GlobalConstants.CURRENT_LOCATION_CITY_EN, 9, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
-                .enqueue(new Callback<WeatherDayHourForecastList>() {
-                    @Override
-                    public void onResponse(@NonNull Call<WeatherDayHourForecastList> call, @NonNull Response<WeatherDayHourForecastList> response) {
-                        weatherDayHourForecastLiveData.postValue(response.body());
-                        System.out.println("hasActiveObservers hour forecast:" + weatherDayHourForecastLiveData.hasActiveObservers());
-                    }
 
-                    @Override
-                    public void onFailure(@NonNull Call<WeatherDayHourForecastList> call, @NonNull Throwable t) {
-                        System.out.println("onFailure hour forecast");
-                    }
-                });
+    public LiveData<WeatherToday> getWeatherNowWidget() {
+        if (weatherNowWidgetLiveData == null) {
+            weatherNowWidgetLiveData = new MutableLiveData<>();
+        }
+        loadWeatherTodayNowWidgetData();
+        return weatherNowWidgetLiveData;
     }
 
-    private void loadForecastDataByCityName() {
-        System.out.println("SDFSF 2:" + GlobalConstants.CURRENT_CITY_EN);
-        RestClient.getService().getForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 5, GlobalConstants.ApiConstants.UNITS, GlobalConstants.ApiConstants.KEY)
-                .enqueue(new Callback<WeatherForecast>() {
-                    @Override
-                    public void onResponse(@NonNull Call<WeatherForecast> call, @NonNull Response<WeatherForecast> response) {
-                        weatherForecastLiveData.postValue(response.body());
-                        System.out.println("hasActiveObservers forecast:" + weatherForecastLiveData.hasActiveObservers());
-                    }
 
-                    @Override
-                    public void onFailure(@NonNull Call<WeatherForecast> call, @NonNull Throwable t) {
-                        System.out.println("onFailure forecast");
-                    }
-                });
+    public void addCurLocToFav(String name) {
+        RestClient.getService().getTodayForecastByCityName(name, UNITS, KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(favourite -> {
+                    Thread thread = new Thread(() -> dataRepository.addToFavourite(favourite));
+                    thread.start();
+                }, throwable -> Toast.makeText(getApplication(), "Error while adding to favourites", Toast.LENGTH_SHORT).show());
+    }
+
+
+    private void loadHourForecastDataByCityName() {
+        RestClient.getService().getHourForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 9, UNITS, KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(weather -> weatherDayHourForecastLiveData.postValue(weather),
+                        throwable -> Toast.makeText(getApplication(), "Error while loading hour forecast by city", Toast.LENGTH_SHORT).show());
+    }
+
+
+    private void loadForecastDataByCityName() {
+        RestClient.getService().getForecastByCityName(GlobalConstants.CURRENT_CITY_EN, 5, UNITS, KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(weather -> weatherForecastLiveData.postValue(weather),
+                        throwable -> Toast.makeText(getApplication(), "Error while loading forecast by city", Toast.LENGTH_SHORT).show());
+    }
+
+
+    private void loadWeatherTodayNowWidgetData() {
+        RestClient.getService().getTodayByCityName(GlobalConstants.CURRENT_CITY_EN, UNITS, KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(weatherToday -> weatherNowWidgetLiveData.postValue(weatherToday),
+                        throwable -> Log.d("Widget", "Error while refreshing widget"));
     }
 }

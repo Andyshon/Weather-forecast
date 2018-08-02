@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.andyshon.weather_forecast.R;
-import com.andyshon.weather_forecast.db.entity.WeatherFiveDaysForecast;
+import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast_list;
 import com.andyshon.weather_forecast.ui.WeatherClickCallback;
 import com.andyshon.weather_forecast.utils.WeatherUtils;
 
@@ -25,20 +25,21 @@ import java.util.Objects;
  * Created by andyshon on 28.07.18.
  */
 
-public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterVertical.BookViewHolder> {
+public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterVertical.WeatherViewHolder> {
 
-    private List<WeatherFiveDaysForecast> allDaysForecast;
+    private List<WeatherTodayForecast_list> allDaysForecast;
     private int row_index = 0;
 
     @Nullable
     private final WeatherClickCallback mWeatherClickCallback;
+
 
     public WeatherAdapterVertical(@Nullable WeatherClickCallback clickCallback) {
         mWeatherClickCallback = clickCallback;
     }
 
 
-    public void setProductList(final List<WeatherFiveDaysForecast> allDaysForecastList) {
+    public void setWeatherList(final List<WeatherTodayForecast_list> allDaysForecastList) {
 
         row_index = 0;  // hover first row
 
@@ -64,8 +65,8 @@ public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterV
 
                 @Override
                 public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                    WeatherFiveDaysForecast newWeather = allDaysForecastList.get(newItemPosition);
-                    WeatherFiveDaysForecast oldWeather = allDaysForecast.get(oldItemPosition);
+                    WeatherTodayForecast_list newWeather = allDaysForecastList.get(newItemPosition);
+                    WeatherTodayForecast_list oldWeather = allDaysForecast.get(oldItemPosition);
                     return Objects.equals(newWeather, oldWeather)
                             && Objects.equals(newWeather.getSpeed(), oldWeather.getSpeed())
                             && Objects.equals(newWeather.getDt(), oldWeather.getDt())
@@ -78,17 +79,18 @@ public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterV
         }
     }
 
-    @Override
-    public BookViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
 
-        return new BookViewHolder(itemView);
+    @Override
+    public WeatherViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_forecast_vertical, parent, false);
+
+        return new WeatherViewHolder(itemView);
     }
 
 
     @Override
-    public void onBindViewHolder(BookViewHolder holder, int position) {
-        WeatherFiveDaysForecast currentDay = allDaysForecast.get(position);
+    public void onBindViewHolder(WeatherViewHolder holder, int position) {
+        WeatherTodayForecast_list currentDay = allDaysForecast.get(position);
 
         String temp = currentDay.getTempMax().concat("˚/").concat(currentDay.getTempMin().concat("˚"));
         holder.tvTemp.setText(temp);
@@ -113,18 +115,21 @@ public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterV
             holder.layoutHorizontal.setBackgroundColor(Color.WHITE);
         }
     }
+
+
     @Override
     public int getItemCount() {
         return allDaysForecast == null ? 0 : allDaysForecast.size();
     }
 
-    static class BookViewHolder extends RecyclerView.ViewHolder {
+
+    static class WeatherViewHolder extends RecyclerView.ViewHolder {
 
         final LinearLayout layoutHorizontal;
         final TextView tvDate, tvTemp;
         final ImageView ivImage;
 
-        public BookViewHolder(View view) {
+        WeatherViewHolder(View view) {
             super(view);
             this.layoutHorizontal = view.findViewById(R.id.layoutItem);
             this.tvDate = view.findViewById(R.id.nameView);

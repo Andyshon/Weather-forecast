@@ -23,14 +23,13 @@ public class WeatherUtils {
     }
 
     /*
-    * Convert city from RU to EN -- no need since OpenWeatherApi can find city from russian name, but sometimes isn't understand all the provided names :(
+    * Convert city from RU to EN -- no need since OpenWeatherApi can find city from russian name, but only big city names :(
     * */
     @Deprecated
     public static String fromRUtoEN (String city) {
         if (city != null) {
             for (int i = 0; i < GlobalConstants.getCitiesRuList().size(); i++) {
                 if (city.equals(GlobalConstants.getCitiesRuList().get(i))) {
-                    System.out.println("CITY TO FIND:" + GlobalConstants.getCitiesEnList().get(i));
                     return GlobalConstants.getCitiesEnList().get(i);
                 }
             }
@@ -104,7 +103,6 @@ public class WeatherUtils {
 
         int image = 0;
         int degree = Integer.parseInt(windState);
-        System.out.println("degree:" + degree);
 
         if (degree==360){
             image = R.drawable.icon_wind_n;
@@ -127,6 +125,7 @@ public class WeatherUtils {
         else if (degree>270 && degree<360) {
             image = R.drawable.icon_wind_wn;
         }
+        else image = R.drawable.icon_wind_se;
 
         return image;
     }

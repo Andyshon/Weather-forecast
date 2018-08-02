@@ -1,34 +1,37 @@
 package com.andyshon.weather_forecast.ui.activity;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.andyshon.weather_forecast.GlobalConstants;
 import com.andyshon.weather_forecast.R;
 import com.andyshon.weather_forecast.databinding.ActivityFavouritesBinding;
-import com.andyshon.weather_forecast.db.FavouritesAdapter;
-import com.andyshon.weather_forecast.db.FavouritesViewModel;
-import com.andyshon.weather_forecast.db.entity.WeatherToday;
+import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast;
+import com.andyshon.weather_forecast.ui.adapter.FavouritesAdapter;
+import com.andyshon.weather_forecast.ui.viewmodel.FavouritesViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FavouritesActivity extends AppCompatActivity implements FavouritesAdapter.FavouriteClickCallback {
 
+    private static final String TAG = "FavouritesActivity";
     private FavouritesViewModel viewModel;
     private ActivityFavouritesBinding mBinding;
     private FavouritesAdapter mBookAdapter;
+
+
+    private LiveData<List<WeatherTodayForecast>> weatherTodayLiveData;
 
 
     @Override
@@ -44,123 +47,119 @@ public class FavouritesActivity extends AppCompatActivity implements FavouritesA
         mBinding.favouritesList.setAdapter(mBookAdapter);
 
         viewModel = ViewModelProviders.of(this).get(FavouritesViewModel.class);
-        subscribeUi(viewModel);
 
-        getFavouritesServerByName(GlobalConstants.CURRENT_LOCATION_CITY_EN);
+        subscribeUi(viewModel);
+    }
+
+    public void moveback(View view) {
+        setResult(RESULT_CANCELED, new Intent());
+        finish();
     }
 
 
     private void subscribeUi(FavouritesViewModel viewModel) {
-        // in purpose to get List of cities names -> get Favourites from local db and then ckeck the internet connection
-        viewModel.getFavouritesLocal().observe(this, new Observer<List<WeatherToday>>() {
-            @Override
-            public void onChanged(@Nullable List<WeatherToday> myFavourites) {
 
-                List<String> favouritesNames = new ArrayList<>();
+        // get favourites from Room
+        viewModel.getFavouritesLocal().observe(this, myFavourites -> {
 
-                System.out.println("myFavourites obj:" + myFavourites);
-                if (myFavourites != null) {
-                    System.out.println("size:" + myFavourites.size());
-                    for (WeatherToday f : myFavourites) {
-                        favouritesNames.add(f.getCity());
-                        System.out.println("id:"+f.getId()+"temp:" + f.getTemp().getTemp_max() + ":" + f.getTemp().getTemp_min()
-                                + ":"+ f.getCity() + ":" + f.getWind().getSpeed());
+            List<String> favouritesNames = new ArrayList<>();
+            List<String> favouritesIds = new ArrayList<>();
+
+            if (myFavourites != null) {
+                if (myFavourites.size() != 0) {
+
+                    for (WeatherTodayForecast w2 : myFavourites) {
+                        favouritesNames.add(w2.getItems_city().getCityName());
+                        favouritesIds.add(String.valueOf(w2.getId()));
                     }
 
+                /*
+                * display favourites locations from server
+                * */
                     if (GlobalConstants.isNetworkAvailable(FavouritesActivity.this)) {
-                        System.out.println("Have internet -> fetch favourites from server");
-                        getFavouritesServer(favouritesNames);
+                        Log.d(TAG, "Have internet -> fetch favourites from server");
+                        getFavouritesServer(favouritesNames, favouritesIds, myFavourites);
+                        //mBookAdapter.setFavouritesList(myFavourites);
                     }
+                /*
+                * display favourites locations from local db
+                * */
                     else {
-                        System.out.println("Don't have internet -> fetch favourites from room");
+                        Log.d(TAG, "Don't have internet -> fetch favourites from room");
                         hideProgressBar();
-                        System.out.println("weatherTodays size = " + myFavourites.size());
                         mBookAdapter.setFavouritesList(myFavourites);
                     }
-
-                } else { // this is for displaying progressbar
-                    showProgressBar();
                 }
-                mBinding.executePendingBindings();
+                else {
+                    hideProgressBar();
+                }
             }
+            else { // this is for displaying progressbar
+                showProgressBar();
+            }
+            mBinding.executePendingBindings();
         });
+
     }
 
 
-    private void getFavouritesServer(List<String> list) {
-        System.out.println("SIZE:" + list.size());
+    private void getFavouritesServer(List<String> list, List<String> ids, List<WeatherTodayForecast> myFavourites) {
 
         if (list.size() == 0) {
             hideProgressBar();
             return;
         }
-        LiveData<List<WeatherToday>> weatherTodayLiveData;
         weatherTodayLiveData = viewModel.getFavouritesServer(list);
-        weatherTodayLiveData.observe(this, new Observer<List<WeatherToday>>() {
-            @Override
-            public void onChanged(@Nullable List<WeatherToday> weatherTodays) {
-                System.out.println("weatherTodays size = " + weatherTodays.size());
-                for (WeatherToday weatherToday : weatherTodays) {
-                    System.out.println("TEMMMP:" + weatherToday.getTemp().getTemp() + ":" + weatherToday.getTemp().getTemp_max() + ":"+  weatherToday.getTemp().getTemp_min());
-                }
-                mBookAdapter.setFavouritesList(weatherTodays);
-                hideProgressBar();
+        weatherTodayLiveData.observe(this, weatherTodays -> {
+            for (int i=0; i<weatherTodays.size(); i++) {
+                weatherTodays.get(i).setId(Integer.parseInt(ids.get(i)));
             }
-        });
-    }
-
-
-    private void getFavouritesServerByName(String name) {
-
-        if (name == null || name.length() == 0) {
+            //mBookAdapter.setFavouritesList(weatherTodays);
             hideProgressBar();
-            return;
-        }
-        LiveData<WeatherToday> weatherTodayLiveData;
-        weatherTodayLiveData = viewModel.getCityByName(name);
-        weatherTodayLiveData.observe(this, new Observer<WeatherToday>() {
-            @Override
-            public void onChanged(@Nullable WeatherToday weatherTodays) {
-                System.out.println("weatherTodays single = " + weatherTodays.getCity());
-                hideProgressBar();
-                viewModel.addToFavourite(weatherTodays);
-                System.out.println("PRE ADD");
-            }
         });
+        mBookAdapter.setFavouritesList(myFavourites);
     }
 
 
     @Override
-    public void onClick(WeatherToday weatherToday) {
-        GlobalConstants.setCurrentCityEN(weatherToday.getCity()); // for toolbar title
-        GlobalConstants.setCurrentCityRU(weatherToday.getCity()); // for toolbar title
+    public void onClick(WeatherTodayForecast weatherToday) {
+        GlobalConstants.setCurrentCityEN(weatherToday.getItems_city().getCityName()); // for toolbar title
+        GlobalConstants.setCurrentCityRU(weatherToday.getItems_city().getCityName()); // for toolbar title
         Intent intent = new Intent();
-        intent.putExtra("city", weatherToday.getCity());
+        intent.putExtra("city", weatherToday.getItems_city().getCityName());
         setResult(RESULT_OK, intent);
         finish();
     }
 
 
     @Override
-    public void onLongClick(WeatherToday weatherToday) {
+    public void onLongClick(WeatherTodayForecast weatherToday) {
         showConfirmDialog(weatherToday);
     }
 
 
-    private void showConfirmDialog(final WeatherToday weatherToday) {
+    private void showConfirmDialog(final WeatherTodayForecast weatherToday) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Delete");
-        alertDialogBuilder.setMessage("Are you sure, You wanted to delete " + weatherToday.getCity() + "?");
-        alertDialogBuilder.setPositiveButton("Yes",
+        alertDialogBuilder.setTitle(R.string.delete);
+        alertDialogBuilder.setMessage(getString(R.string.confirmQuestion) + weatherToday.getItems_city().getCityName() + "?");
+        alertDialogBuilder.setPositiveButton(R.string.yes,
                 (arg0, arg1) -> {
                     Handler handler = new Handler();
                     Thread thread = new Thread(() -> {
+                        List<WeatherTodayForecast> ll = weatherTodayLiveData.getValue();
+                        for (int i=0; i<ll.size(); i++) {
+                            if (ll.get(i).getId() == weatherToday.getId()) {
+                                ll.remove(i);
+                            }
+                        }
                         viewModel.deleteFromFavourite(weatherToday);
-                        handler.post(() -> Toast.makeText(this, weatherToday.getCity() + " was deleted!", Toast.LENGTH_SHORT).show());
+                        handler.post(() -> {
+                            Toast.makeText(this, weatherToday.getItems_city().getCityName() + " was deleted!", Toast.LENGTH_SHORT).show();
+                        });
                     }); thread.start();
                 });
 
-        alertDialogBuilder.setNegativeButton("No", (dialog, which) -> Toast.makeText(this, "Cancel", Toast.LENGTH_SHORT).show());
+        alertDialogBuilder.setNegativeButton(R.string.no, (dialog, which) -> Toast.makeText(this, R.string.cancel, Toast.LENGTH_SHORT).show());
 
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
@@ -170,7 +169,6 @@ public class FavouritesActivity extends AppCompatActivity implements FavouritesA
     private void showProgressBar() {
         mBinding.progressBar.setVisibility(View.VISIBLE);
     }
-
 
     private void hideProgressBar() {
         mBinding.progressBar.setVisibility(View.GONE);

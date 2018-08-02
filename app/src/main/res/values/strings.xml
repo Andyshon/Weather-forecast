@@ -1,7 +1,20 @@
 <resources>
     <string name="app_name">Weather-forecast</string>
+    <string name="widgetName">Weather</string>
     <string name="ph_19_29">19˚/29˚</string>
     <string name="ph_95">95%</string>
     <string name="ph_2">2м/сек</string>
     <string name="title_activity_maps">Map</string>
+    <string name="favourites">Места</string>
+    <string name="speedms">м/сек</string>
+    <string name="networkUnavailable">Сеть недоступна.</string>
+    <string name="wrongRequestCode">Wrong requestCode</string>
+    <string name="delete">Delete</string>
+    <string name="confirmQuestion">Are you sure, You wanted to delete</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">ДОБАВИТЬ</string>
+    <string name="LocalityUnidentified">Неопознанная местность</string>
+    <string name="favouritesAddFailed">Can\'t add to favourites</string>
 </resources>

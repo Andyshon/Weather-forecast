@@ -11,7 +11,7 @@ import android.widget.Filterable;
 
 import com.andyshon.weather_forecast.GlobalConstants;
 import com.andyshon.weather_forecast.R;
-import com.andyshon.weather_forecast.databinding.RowItemBinding;
+import com.andyshon.weather_forecast.databinding.ListItemMapsAdapterBinding;
 import com.andyshon.weather_forecast.ui.activity.MapsActivity;
 
 import java.util.ArrayList;
@@ -64,18 +64,15 @@ public class MapsListAdapter extends BaseAdapter implements Filterable {
         if (inflater == null) {
             inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
-        RowItemBinding rowItemBinding = DataBindingUtil.inflate(inflater, R.layout.row_item, parent, false);
+        ListItemMapsAdapterBinding rowItemBinding = DataBindingUtil.inflate(inflater, R.layout.list_item_maps_adapter, parent, false);
         rowItemBinding.stringName.setText(mData.get(position));
 
         // only russian cities names
-        rowItemBinding.rowCity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String city = mData.get(position).trim();
-                GlobalConstants.setCurrentCityRU(city);
-                GlobalConstants.updateCurrentCity(city, 2);
-                ((MapsActivity)context).findCityByName(GlobalConstants.CURRENT_CITY_EN);
-            }
+        rowItemBinding.rowCity.setOnClickListener(view -> {
+            String city = mData.get(position).trim();
+            GlobalConstants.setCurrentCityRU(city);
+            GlobalConstants.updateCurrentCity(city, 2);
+            ((MapsActivity)context).findCityByName(GlobalConstants.CURRENT_CITY_EN);
         });
 
         return rowItemBinding.getRoot();

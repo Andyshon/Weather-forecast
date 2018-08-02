@@ -98,7 +98,7 @@ public class GetAddressIntentService extends IntentService {
         }
     }
 
-    //to send results to receiver in the source activity
+    //to send results to receiver in the MainActivity
     private void sendResultsToReceiver(int resultCode, String message) {
         Bundle bundle = new Bundle();
         bundle.putString("address_result", message);

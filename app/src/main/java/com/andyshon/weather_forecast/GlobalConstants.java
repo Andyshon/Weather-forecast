@@ -58,7 +58,7 @@ public class GlobalConstants {
             }
         }
         if (!isCityFound) {
-            CURRENT_CITY_EN = citiesEN[0];  // Zaporizhzhya, maybe it should be the last location stored in db
+            CURRENT_CITY_EN = citiesEN[0];  // Zaporizhzhya
             CURRENT_LOCATION_CITY_EN = citiesEN[0];
         }
     }
@@ -126,7 +126,7 @@ public class GlobalConstants {
 
         public static void saveLastUserLocation(Context context) {
             GlobalConstants.IsLocationDetected = true;
-            SharedPreferences sPref = ((Activity)context).getPreferences(MODE_PRIVATE);
+            SharedPreferences sPref = ((Activity)context).getSharedPreferences("MyWeatherPref", MODE_PRIVATE);
             SharedPreferences.Editor ed = sPref.edit();
             ed.putString(SAVED_LOCATION_EN, GlobalConstants.CURRENT_LOCATION_CITY_EN);
             ed.putString(SAVED_LOCATION_RU, GlobalConstants.CURRENT_LOCATION_CITY_RU);
@@ -134,7 +134,7 @@ public class GlobalConstants {
         }
 
         public static void loadLastUserLocation(Context context) {
-            SharedPreferences sPref = ((Activity)context).getPreferences(MODE_PRIVATE);
+            SharedPreferences sPref = ((Activity)context).getSharedPreferences("MyWeatherPref", MODE_PRIVATE);
             String savedLocation_en = sPref.getString(SAVED_LOCATION_EN, "");
             String savedLocation_ru = sPref.getString(SAVED_LOCATION_RU, "");
             if (!savedLocation_en.isEmpty() && !savedLocation_ru.isEmpty()) {
