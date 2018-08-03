@@ -4,9 +4,7 @@ import android.appwidget.AppWidgetManager;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.andyshon.weather_forecast.GlobalConstants;
-import com.andyshon.weather_forecast.data.AppDatabase;
 import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast_list;
 import com.andyshon.weather_forecast.service.LocationDetector;
 import com.andyshon.weather_forecast.R;
@@ -35,8 +32,6 @@ import com.andyshon.weather_forecast.widget.MyWidget;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.microedition.khronos.opengles.GL;
-
 public class MainActivity extends AppCompatActivity implements LocationDetector.MyCallback {
 
     private TextView tvTemp, tvHumidity, tvDate, tvWind, tvCityName;
@@ -47,8 +42,6 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
     private WeatherAdapterVertical mAdapterVertical;
     private WeatherAdapterHorizontal mAdapterHorizontal;
-
-    private RecyclerView recyclerViewH, recyclerViewV;
 
     private static final int REQUEST_CODE_DISPLAY_CITY = 1;
 
@@ -64,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
     private final WeatherClickCallback mAdapterVClickCallback = weatherDay -> {
         if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
             updateTodayUI(weatherDay);
+            //todo load hour forecast by given date
         }
     };
 
@@ -106,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
     protected void onResume() {
         super.onResume();
 
+        ivChoose_city.setClickable(true);
+        ivChoose_city.setEnabled(true);
+
         if (!GlobalConstants.IsLocationDetected) {
             if (GlobalConstants.isNetworkAvailable(this)) {
                 new LocationDetector(this, this);
@@ -125,34 +122,38 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
         ivChoose_city = findViewById(R.id.ic_choose_city);
         ivChoose_city.setOnClickListener(view -> {
+            ivChoose_city.setClickable(false);
+            ivChoose_city.setEnabled(false);
             Intent intent1 = new Intent(MainActivity.this, MapsActivity.class);
             startActivityForResult(intent1, REQUEST_CODE_DISPLAY_CITY);
         });
 
 
         tvCityName = findViewById(R.id.tvCityName);
+        tvTemp = findViewById(R.id.tvTemp);
+        tvHumidity = findViewById(R.id.tvHumidity);
+        tvDate = findViewById(R.id.tvDate);
+        tvWind = findViewById(R.id.tvWind);
+        ivWeatherState = findViewById(R.id.ivWeatherState);
+
         setTitle();
 
         weatherForecastList = new ArrayList<>();
         allTodayHoursForecast = new ArrayList<>();
 
 
-        mAdapterVertical = new WeatherAdapterVertical(mAdapterVClickCallback);
-        recyclerViewH = findViewById(R.id.recyclerView1);
+        mAdapterHorizontal = new WeatherAdapterHorizontal();
+        RecyclerView recyclerViewH = findViewById(R.id.recyclerView1);
         LinearLayoutManager layoutManager1 = new LinearLayoutManager(MainActivity.this, LinearLayoutManager.HORIZONTAL, false);
         recyclerViewH.setLayoutManager(layoutManager1);
+        recyclerViewH.setAdapter(mAdapterHorizontal);
 
-        mAdapterHorizontal = new WeatherAdapterHorizontal();
-        recyclerViewV = findViewById(R.id.recyclerView2);
+        mAdapterVertical = new WeatherAdapterVertical(mAdapterVClickCallback);
+        RecyclerView recyclerViewV = findViewById(R.id.recyclerView2);
         LinearLayoutManager layoutManager2 = new LinearLayoutManager(MainActivity.this, LinearLayoutManager.VERTICAL, false);
         recyclerViewV.setLayoutManager(layoutManager2);
+        recyclerViewV.setAdapter(mAdapterVertical);
 
-
-        tvTemp = findViewById(R.id.tvTemp);
-        tvHumidity = findViewById(R.id.tvHumidity);
-        tvDate = findViewById(R.id.tvDate);
-        tvWind = findViewById(R.id.tvWind);
-        ivWeatherState = findViewById(R.id.ivWeatherState);
 
         weatherViewModel = ViewModelProviders.of(this).get(WeatherViewModel.class);
     }
@@ -180,24 +181,21 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
         showProgressbar();
         weatherViewModel.getHourForecastData().observe(this, weatherDayHourForecast -> {
 
+            // size = 9
             allTodayHoursForecast.clear();
             allTodayHoursForecast.addAll(weatherDayHourForecast.getItems());
-
             mAdapterHorizontal.setWeatherList(allTodayHoursForecast);
-            recyclerViewH.setAdapter(mAdapterHorizontal);
         });
 
 
         weatherViewModel.getForecastData().observe(this, weatherForecast -> {
 
-            weatherForecastList.clear();
             // size = 5
+            weatherForecastList.clear();
             weatherForecastList.addAll(weatherForecast.getItems());
-
-            updateTodayUI(weatherForecastList.get(0));
             mAdapterVertical.setWeatherList(weatherForecastList);
-
-            recyclerViewV.setAdapter(mAdapterVertical);
+            // update today ui with first day weather condition
+            updateTodayUI(weatherForecastList.get(0));
         });
     }
 
