@@ -1,7 +1,6 @@
 package com.andyshon.weather_forecast.ui.adapter;
 
 import android.databinding.DataBindingUtil;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -36,46 +35,9 @@ public class FavouritesAdapter extends RecyclerView.Adapter<FavouritesAdapter.Fa
     }
 
 
-    /*public void setFavouritesList(final List<WeatherTodayForecast> favouritesList) {
+    public void setFavouritesList(final List<WeatherTodayForecast> favouritesList) {
         mFavouritesList = favouritesList;
         notifyDataSetChanged();
-    }*/
-    public void setFavouritesList(final List<WeatherTodayForecast> favouritesList) {
-        if (mFavouritesList == null) {
-            mFavouritesList = favouritesList;
-            notifyItemRangeInserted(0, favouritesList.size());
-        } else {
-            DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-                @Override
-                public int getOldListSize() {
-                    return mFavouritesList.size();
-                }
-
-                @Override
-                public int getNewListSize() {
-                    return favouritesList.size();
-                }
-
-                @Override
-                public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                    return mFavouritesList.get(oldItemPosition).getId() == favouritesList.get(newItemPosition).getId();
-                }
-
-                @Override
-                public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                    WeatherTodayForecast newW = favouritesList.get(newItemPosition);
-                    WeatherTodayForecast oldW = mFavouritesList.get(oldItemPosition);
-                    return newW.getId() == oldW.getId()
-                            && newW.getItems().get(0).getDescription().description.equals(oldW.getItems().get(0).getDescription().description)
-                            && newW.getItems().get(0).getTempDay().equals(oldW.getItems().get(0).getTempDay())
-                            && newW.getItems().get(0).getTempMax().equals(oldW.getItems().get(0).getTempMax())
-                            && newW.getItems().get(0).getTempMin().equals(oldW.getItems().get(0).getTempMin())
-                            && newW.getItems().get(0).getHumidity().equals(oldW.getItems().get(0).getHumidity());
-                }
-            });
-            mFavouritesList = favouritesList;
-            result.dispatchUpdatesTo(this);
-        }
     }
 
 

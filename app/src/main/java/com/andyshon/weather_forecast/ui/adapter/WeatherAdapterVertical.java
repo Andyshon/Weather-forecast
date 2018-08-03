@@ -2,7 +2,6 @@ package com.andyshon.weather_forecast.ui.adapter;
 
 import android.graphics.Color;
 import android.support.annotation.Nullable;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +18,6 @@ import com.andyshon.weather_forecast.utils.WeatherUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Created by andyshon on 28.07.18.
@@ -43,40 +41,8 @@ public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterV
 
         row_index = 0;  // hover first row
 
-        if (allDaysForecast == null) {
-            allDaysForecast = allDaysForecastList;
-            notifyItemRangeInserted(0, allDaysForecastList.size());
-        } else {
-            DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-                @Override
-                public int getOldListSize() {
-                    return allDaysForecast.size();
-                }
-
-                @Override
-                public int getNewListSize() {
-                    return allDaysForecastList.size();
-                }
-
-                @Override
-                public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                    return allDaysForecast.get(oldItemPosition) == allDaysForecastList.get(newItemPosition);
-                }
-
-                @Override
-                public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                    WeatherTodayForecast_list newWeather = allDaysForecastList.get(newItemPosition);
-                    WeatherTodayForecast_list oldWeather = allDaysForecast.get(oldItemPosition);
-                    return Objects.equals(newWeather, oldWeather)
-                            && Objects.equals(newWeather.getSpeed(), oldWeather.getSpeed())
-                            && Objects.equals(newWeather.getDt(), oldWeather.getDt())
-                            && Objects.equals(newWeather.getPressure(), oldWeather.getPressure())
-                            && Objects.equals(newWeather.getHumidity(), oldWeather.getHumidity());
-                }
-            });
-            allDaysForecast = allDaysForecastList;
-            result.dispatchUpdatesTo(this);
-        }
+        allDaysForecast = allDaysForecastList;
+        notifyDataSetChanged();
     }
 
 
