@@ -90,11 +90,6 @@ public class MyWidget extends AppWidgetProvider {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(weatherToday -> {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                         views.setTextViewText(R.id.tvTempCur, String.valueOf(weatherToday.getTemp().getTemp().intValue()).concat("˚"));
                         views.setImageViewResource(R.id.ivWeatherState, WeatherUtils.getIconByWeatherState(weatherToday.getDescription().get(0).getDescription(), true));
                         views.setTextViewText(R.id.tvCityName, weatherToday.getCity());
