@@ -29,6 +29,7 @@ public class WeatherViewModel extends AndroidViewModel {
 
     private MutableLiveData<WeatherTodayForecast> weatherForecastLiveData;
     private MutableLiveData<WeatherTodayHourForecast> weatherDayHourForecastLiveData;
+    private MutableLiveData<WeatherTodayHourForecast> weatherDayHourForecastByDate;
     private MutableLiveData<WeatherToday> weatherNowWidgetLiveData;
 
     private DataRepository dataRepository;
@@ -58,6 +59,15 @@ public class WeatherViewModel extends AndroidViewModel {
     }
 
 
+    public LiveData<WeatherTodayHourForecast> getHourForecastDataByDate(String date, boolean isToday) {
+        if (weatherDayHourForecastByDate == null) {
+            weatherDayHourForecastByDate = new MutableLiveData<>();
+        }
+        loadHourForecastDataByCityNameAndDate(date, isToday);
+        return weatherDayHourForecastByDate;
+    }
+
+
     public LiveData<WeatherToday> getWeatherNowWidget() {
         if (weatherNowWidgetLiveData == null) {
             weatherNowWidgetLiveData = new MutableLiveData<>();
@@ -84,6 +94,32 @@ public class WeatherViewModel extends AndroidViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(weather -> weatherDayHourForecastLiveData.postValue(weather),
                         throwable -> Toast.makeText(getApplication(), "Error while loading hour forecast by city", Toast.LENGTH_SHORT).show());
+    }
+
+
+    private void loadHourForecastDataByCityNameAndDate(String date, boolean isToday) {
+        RestClient.getService().getHourForecastByCityNameAndDate(GlobalConstants.CURRENT_CITY_EN, UNITS, KEY)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter(weatherTodayHourForecast -> {
+                    if (isToday) {
+                        for (int i=8; i<weatherTodayHourForecast.getItems().size(); i++) {
+                            weatherTodayHourForecast.getItems().remove(i);
+                            --i;
+                        }
+                    }
+                    else {
+                        for (int i = 0; i < weatherTodayHourForecast.getItems().size(); i++) {
+                            if (!weatherTodayHourForecast.getItems().get(i).getDt_txt().contains(date)) {
+                                weatherTodayHourForecast.getItems().remove(i);
+                                --i;
+                            }
+                        }
+                    }
+                    return true;
+                })
+                .subscribe(weather -> weatherDayHourForecastByDate.postValue(weather),
+                        throwable -> Toast.makeText(getApplication(), "Error while loading hour forecast by city2", Toast.LENGTH_SHORT).show());
     }
 
 

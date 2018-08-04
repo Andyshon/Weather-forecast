@@ -2,9 +2,11 @@ package com.andyshon.weather_forecast.ui.activity;
 
 import android.appwidget.AppWidgetManager;
 import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,10 +20,10 @@ import android.widget.Toast;
 
 import com.andyshon.weather_forecast.GlobalConstants;
 import com.andyshon.weather_forecast.data.entity.weather_today_forecast.WeatherTodayForecast_list;
+import com.andyshon.weather_forecast.data.entity.weather_today_hour_forecast.WeatherTodayHourForecast;
 import com.andyshon.weather_forecast.service.LocationDetector;
 import com.andyshon.weather_forecast.R;
 import com.andyshon.weather_forecast.data.remote.RestClient;
-import com.andyshon.weather_forecast.data.entity.weather_today_hour_forecast.WeatherTodayHourForecast_list;
 import com.andyshon.weather_forecast.ui.adapter.WeatherAdapterHorizontal;
 import com.andyshon.weather_forecast.ui.adapter.WeatherAdapterVertical;
 import com.andyshon.weather_forecast.ui.WeatherClickCallback;
@@ -29,8 +31,8 @@ import com.andyshon.weather_forecast.ui.viewmodel.WeatherViewModel;
 import com.andyshon.weather_forecast.utils.WeatherUtils;
 import com.andyshon.weather_forecast.widget.MyWidget;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements LocationDetector.MyCallback {
 
@@ -49,15 +51,34 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
     * Any fool can write code that a computer can understand. Good programmers write code that humans can understand..
     * */
 
-    private List<WeatherTodayForecast_list> weatherForecastList;
-    private List<WeatherTodayHourForecast_list> allTodayHoursForecast;
 
-
-
-    private final WeatherClickCallback mAdapterVClickCallback = weatherDay -> {
+    private final WeatherClickCallback mAdapterVClickCallback = (weatherDay, isToday)-> {
         if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
             updateTodayUI(weatherDay);
             //todo load hour forecast by given date
+            String year = (new SimpleDateFormat("y").format(new Date(weatherDay.getDt() * 1000))).toUpperCase();
+            String month = (new SimpleDateFormat("M").format(new Date(weatherDay.getDt() * 1000))).toUpperCase();
+            String day = (new SimpleDateFormat("d").format(new Date(weatherDay.getDt() * 1000))).toUpperCase();
+
+            int monthInt = Integer.parseInt(month);
+            if (monthInt<10) {
+                month = "";
+                month = month.concat("0").concat(String.valueOf(monthInt));
+            }
+            int dayInt = Integer.parseInt(day);
+            if (dayInt < 10) {
+                day = "";
+                day = day.concat("0").concat(String.valueOf(dayInt));
+            }
+
+            String dateFull = year.concat("-").concat(month).concat("-").concat(day);
+
+            weatherViewModel.getHourForecastDataByDate(dateFull, isToday).observe(this, new Observer<WeatherTodayHourForecast>() {
+                @Override
+                public void onChanged(@Nullable WeatherTodayHourForecast weatherTodayHourForecast) {
+                    mAdapterHorizontal.setWeatherList(weatherTodayHourForecast.getItems());
+                }
+            });
         }
     };
 
@@ -138,9 +159,6 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
 
         setTitle();
 
-        weatherForecastList = new ArrayList<>();
-        allTodayHoursForecast = new ArrayList<>();
-
 
         mAdapterHorizontal = new WeatherAdapterHorizontal();
         RecyclerView recyclerViewH = findViewById(R.id.recyclerView1);
@@ -182,20 +200,16 @@ public class MainActivity extends AppCompatActivity implements LocationDetector.
         weatherViewModel.getHourForecastData().observe(this, weatherDayHourForecast -> {
 
             // size = 9
-            allTodayHoursForecast.clear();
-            allTodayHoursForecast.addAll(weatherDayHourForecast.getItems());
-            mAdapterHorizontal.setWeatherList(allTodayHoursForecast);
+            mAdapterHorizontal.setWeatherList(weatherDayHourForecast.getItems());
         });
 
 
         weatherViewModel.getForecastData().observe(this, weatherForecast -> {
 
             // size = 5
-            weatherForecastList.clear();
-            weatherForecastList.addAll(weatherForecast.getItems());
-            mAdapterVertical.setWeatherList(weatherForecastList);
+            mAdapterVertical.setWeatherList(weatherForecast.getItems());
             // update today ui with first day weather condition
-            updateTodayUI(weatherForecastList.get(0));
+            updateTodayUI(weatherForecast.getItems().get(0));
         });
     }
 

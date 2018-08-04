@@ -71,7 +71,7 @@ public class WeatherAdapterVertical extends RecyclerView.Adapter<WeatherAdapterV
             row_index=position;
             notifyDataSetChanged();
 
-            mWeatherClickCallback.onClick(currentDay);
+            mWeatherClickCallback.onClick(currentDay, row_index == 0);
         });
 
         if(row_index==position){

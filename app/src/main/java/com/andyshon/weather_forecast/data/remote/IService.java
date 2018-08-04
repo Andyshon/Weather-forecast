@@ -29,6 +29,13 @@ public interface IService {
             @Query("appid") String appid
     );
 
+    @GET("forecast")
+    Single<WeatherTodayHourForecast> getHourForecastByCityNameAndDate(
+            @Query("q") String cityName,
+            @Query("units") String units,
+            @Query("appid") String appid
+    );
+
     @GET("forecast/daily")
     Single<WeatherTodayForecast> getForecastByCityName(
             @Query("q") String cityName,
